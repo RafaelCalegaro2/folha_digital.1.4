@@ -1,12 +1,17 @@
 :root {
     --primary: #fa7435;
-    --primary-dark: #8f461c;
+    --primary-dark: #d8632c;
+    --whatsapp: #25D366;
+    --whatsapp-dark: #128C7E;
+    --danger: #e74c3c;
+    --danger-dark: #c0392b;
     --text: #333;
-    --text-light: #666;
-    --bg: #f5f5f5;
-    --card: white;
+    --text-light: #777;
+    --bg: #f4f7f6;
+    --card: #ffffff;
     --border: #e0e0e0;
-    --sidebar-width: 300px;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    --sidebar-width: 320px;
 }
 
 * {
@@ -16,7 +21,7 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--bg);
     color: var(--text);
     line-height: 1.6;
@@ -26,43 +31,54 @@ body {
     display: flex;
     min-height: 100vh;
     position: relative;
+    background-color: var(--card);
 }
 
 .main-content {
     flex: 1;
-    padding: 20px;
+    padding: 25px;
     max-width: 100%;
-    transition: margin 0.3s ease;
 }
 
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 15px;
 }
 
-h1 {
-    font-size: 1.5rem;
+h1, h2 {
     color: var(--primary-dark);
 }
 
-#toggleMenu {
+h1 {
+    font-size: 1.8rem;
+}
+
+h2 {
+    font-size: 1.3rem;
+}
+
+#toggleMenu, #closeSidebar {
     background: none;
     border: none;
-    font-size: 24px;
+    font-size: 28px;
     cursor: pointer;
-    color: var(--primary);
+    color: var(--text-light);
+    padding: 5px;
 }
 
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 label {
     display: block;
-    margin-bottom: 5px;
-    font-weight: 500;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
     color: var(--text-light);
 }
 
@@ -70,73 +86,101 @@ input[type="text"],
 input[type="date"],
 input[type="time"] {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 16px;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(250, 116, 53, 0.2);
 }
 
 .time-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin: 15px 0;
-}
-
-.time-group {
-    display: flex;
-    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
 }
 
 button {
     width: 100%;
-    padding: 12px;
+    padding: 14px;
     margin-top: 10px;
-    background-color: var(--primary);
     color: white;
     border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: 500;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background-color 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
 button:hover {
+    opacity: 0.9;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+button[type="submit"] {
+    background-color: var(--primary);
+}
+button[type="submit"]:hover {
     background-color: var(--primary-dark);
+}
+
+#whatsappBtn {
+    background-color: var(--whatsapp);
+}
+#whatsappBtn:hover {
+    background-color: var(--whatsapp-dark);
 }
 
 .history-sidebar {
     position: fixed;
     top: 0;
-    right: -100%;
+    right: -110%;
     width: 100%;
     max-width: var(--sidebar-width);
     height: 100vh;
-    background-color: var(--card);
-    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
-    transition: right 0.3s ease;
+    background-color: var(--bg);
+    box-shadow: var(--shadow);
+    transition: right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     overflow-y: auto;
     z-index: 100;
+    border-left: 1px solid var(--border);
+}
+
+.history-sidebar.visible {
+    right: 0;
 }
 
 .sidebar-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px;
+    padding: 15px 20px;
     border-bottom: 1px solid var(--border);
-}
-
-#closeSidebar {
-    width: auto;
-    padding: 5px 10px;
-    background: none;
-    color: var(--text-light);
+    background-color: var(--card);
 }
 
 #tabelaHistorico {
-    padding: 15px;
+    padding: 10px;
+}
+
+.empty-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-light);
 }
 
 table {
@@ -145,40 +189,72 @@ table {
 }
 
 th, td {
-    padding: 10px;
+    padding: 12px 15px;
     text-align: left;
     border-bottom: 1px solid var(--border);
-    font-size: 14px;
+    font-size: 0.9rem;
 }
 
 th {
-    background-color: var(--bg);
-    font-weight: 500;
+    background-color: #f9fafb;
+    font-weight: 600;
+    color: var(--text-light);
 }
 
-tr:hover {
-    background-color: rgba(0, 0, 0, 0.02);
+td {
+    background-color: var(--card);
 }
 
-/* Mobile */
+.actions-cell {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    min-width: 60px;
+    color: white;
+}
+
+.edit-btn {
+    background-color: #3498db;
+}
+.edit-btn:hover {
+    background-color: #2980b9;
+}
+
+.delete-btn {
+    background-color: var(--danger);
+}
+.delete-btn:hover {
+    background-color: var(--danger-dark);
+}
+
 @media (max-width: 768px) {
     .time-grid {
         grid-template-columns: 1fr;
     }
-    
     .history-sidebar {
-        max-width: 85%;
+        max-width: 90%;
     }
 }
 
-/* Desktop */
 @media (min-width: 769px) {
-    .history-sidebar {
-        position: relative;
-        right: 0;
-        border-left: 1px solid var(--border);
+    .app-container {
+        background-color: var(--bg);
     }
-    
+    .main-content {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: var(--card);
+        min-height: 100vh;
+    }
+    .history-sidebar {
+        position: static;
+        border-left: 1px solid var(--border);
+        box-shadow: none;
+    }
     #toggleMenu, #closeSidebar {
         display: none;
     }

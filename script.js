@@ -1,169 +1,186 @@
-let registros = JSON.parse(localStorage.getItem('registrosPontos')) || [];
+// Espera o DOM carregar completamente antes de executar o script
+document.addEventListener('DOMContentLoaded', () => {
 
-// Elementos DOM
-const form = document.getElementById('formPonto');
-const tabelaHistorico = document.getElementById('tabelaHistorico');
-const toggleMenu = document.getElementById('toggleMenu');
-const closeSidebar = document.getElementById('closeSidebar');
-const historySidebar = document.getElementById('historySidebar');
+    // --- SELETORES DE ELEMENTOS DOM ---
+    const form = document.getElementById('formPonto');
+    const tabelaHistorico = document.getElementById('tabelaHistorico');
+    const toggleMenu = document.getElementById('toggleMenu');
+    const closeSidebar = document.getElementById('closeSidebar');
+    const historySidebar = document.getElementById('historySidebar');
+    const whatsappBtn = document.getElementById('whatsappBtn');
+    
+    // --- ESTADO DA APLICAÇÃO ---
+    let registros = JSON.parse(localStorage.getItem('registrosPontos')) || [];
 
-// Alternar menu lateral (mobile)
-toggleMenu.addEventListener('click', () => {
-    historySidebar.style.right = '0';
-});
+    // --- FUNÇÕES PRINCIPAIS ---
 
-closeSidebar.addEventListener('click', () => {
-    historySidebar.style.right = '-100%';
-});
-
-// Salvar novo registro
-form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    
-    const novoRegistro = {
-        id: Date.now(),
-        nome: document.getElementById('nome').value,
-        data: document.getElementById('data').value,
-        entrada: document.getElementById('entrada').value,
-        saida: document.getElementById('saida').value,
-        timestamp: new Date().toISOString()
-    };
-    
-    // Validação básica
-    if (novoRegistro.saida && novoRegistro.entrada > novoRegistro.saida) {
-        alert("A saída não pode ser antes da entrada!");
-        return;
-    }
-    
-    registros.push(novoRegistro);
-    salvarNoLocalStorage();
-    atualizarHistorico();
-    form.reset();
-});
-
-// Exportar para CSV
-document.getElementById('exportCSV').addEventListener('click', () => {
-    if (registros.length === 0) {
-        alert("Nenhum registro para exportar!");
-        return;
-    }
-    
-    const headers = ['Nome', 'Data', 'Entrada', 'Saida'];
-    const csvRows = [
-        headers.join(','),
-        ...registros.map(reg => 
-            [reg.nome, reg.data, reg.entrada, reg.saida]
-            .map(field => `"${field || ''}"`).join(',')
-        )
-    ];
-    
-    downloadFile('Folha - '+csvRows[1].split(',')[0].replace(/"/g, '')+'.csv', csvRows.join('\n'), 'text/csv');
-});
-
-// Atualizar função atualizarHistorico()
-function atualizarHistorico() {
-    if (registros.length === 0) {
-        tabelaHistorico.innerHTML = '<p class="empty-message">Nenhum registro encontrado</p>';
-        return;
-    }
-    
-    const sortedRegistros = [...registros].sort((a, b) => new Date(b.data) - new Date(a.data));
-    
-    tabelaHistorico.innerHTML = `
-        <table>
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Data</th>
-                    <th>Entrada</th>
-                    <th>Saída</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${sortedRegistros.map(reg => `
-                    <tr>
-                        <td>${reg.nome}</td>
-                        <td>${formatarData(reg.data)}</td>
-                        <td>${reg.entrada || '-'}</td>
-                        <td>${reg.saida || '-'}</td>
-                        <td class="actions-cell">
-                            <button class="action-btn edit-btn" onclick="editarRegistro(${reg.id})">Editar</button>
-                            <button class="action-btn delete-btn" onclick="excluirRegistro(${reg.id})">Excluir</button>
-                        </td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `;
-}
-
-// Funções de edição/exclusão (adicionar ao script.js)
-function editarRegistro(id) {
-    const registro = registros.find(reg => reg.id === id);
-    if (!registro) return;
-    
-    // Preenche o formulário com os dados do registro
-    document.getElementById('nome').value = registro.nome;
-    document.getElementById('data').value = registro.data;
-    document.getElementById('entrada').value = registro.entrada;
-    document.getElementById('saida').value = registro.saida;
-    
-    // Remove o registro antigo (será readicionado ao salvar)
-    registros = registros.filter(reg => reg.id !== id);
-    salvarNoLocalStorage();
-    
-    // Foca no campo de nome para facilitar a edição
-    document.getElementById('nome').focus();
-    
-    // Atualiza o histórico (removendo o registro que está sendo editado)
-    atualizarHistorico();
-    
-    // Fecha o sidebar em mobile
-    if (window.innerWidth < 769) {
-        historySidebar.style.right = '-100%';
-    }
-}
-
-function excluirRegistro(id) {
-    if (confirm("Tem certeza que deseja excluir este registro?")) {
-        registros = registros.filter(reg => reg.id !== id);
+    const salvarRegistro = (e) => {
+        e.preventDefault();
+        const nomeInput = document.getElementById('nome');
+        
+        const novoRegistro = {
+            id: Date.now(),
+            nome: nomeInput.value.trim(),
+            data: document.getElementById('data').value,
+            entrada: document.getElementById('entrada').value,
+            saida: document.getElementById('saida').value,
+        };
+        
+        if (novoRegistro.saida && novoRegistro.entrada > novoRegistro.saida) {
+            alert("A hora de saída não pode ser anterior à hora de entrada!");
+            return;
+        }
+        
+        registros.push(novoRegistro);
         salvarNoLocalStorage();
         atualizarHistorico();
-    }
-}
+        
+        const nomeAtual = nomeInput.value;
+        form.reset();
+        nomeInput.value = nomeAtual;
+    };
 
-// Funções auxiliares
-function salvarNoLocalStorage() {
-    localStorage.setItem('registrosPontos', JSON.stringify(registros));
-}
+    const atualizarHistorico = () => {
+        if (registros.length === 0) {
+            tabelaHistorico.innerHTML = '<p class="empty-message">Nenhum registro encontrado.</p>';
+            return;
+        }
+        
+        const sortedRegistros = [...registros].sort((a, b) => new Date(b.data) - new Date(a.data) || b.id - a.id);
+        
+        tabelaHistorico.innerHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Data</th>
+                        <th>Entrada</th>
+                        <th>Saída</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sortedRegistros.map(reg => `
+                        <tr data-id="${reg.id}">
+                            <td>${reg.nome}</td>
+                            <td>${formatarData(reg.data)}</td>
+                            <td>${reg.entrada || '---'}</td>
+                            <td>${reg.saida || '---'}</td>
+                            <td class="actions-cell">
+                                <button class="action-btn edit-btn"><i class="fas fa-edit"></i></button>
+                                <button class="action-btn delete-btn"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    };
 
-function downloadFile(filename, content, type) {
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-}
+    const handleAcoesTabela = (e) => {
+        const target = e.target.closest('.action-btn');
+        if (!target) return;
 
-function formatarData(dataStr) {
-    const [year, month, day] = dataStr.split('-');
-    return `${day}/${month}`;
-}
+        const id = Number(target.closest('tr').dataset.id);
 
-// Inicialização
-atualizarHistorico();
+        if (target.classList.contains('edit-btn')) {
+            editarRegistro(id);
+        } else if (target.classList.contains('delete-btn')) {
+            excluirRegistro(id);
+        }
+    };
 
-// Mostrar/ocultar sidebar baseado no tamanho da tela
-function handleResponsive() {
-    if (window.innerWidth >= 769) {
-        historySidebar.style.right = '0';
-    } else {
-        historySidebar.style.right = '-100%';
-    }
-}
+    const editarRegistro = (id) => {
+        const registro = registros.find(reg => reg.id === id);
+        if (!registro) return;
+        
+        document.getElementById('nome').value = registro.nome;
+        document.getElementById('data').value = registro.data;
+        document.getElementById('entrada').value = registro.entrada;
+        document.getElementById('saida').value = registro.saida;
+        
+        registros = registros.filter(reg => reg.id !== id);
+        salvarNoLocalStorage();
+        
+        document.getElementById('nome').focus();
+        atualizarHistorico();
+        
+        if (window.innerWidth < 769) {
+            historySidebar.classList.remove('visible');
+        }
+    };
 
-window.addEventListener('resize', handleResponsive);
-handleResponsive();
+    const excluirRegistro = (id) => {
+        if (confirm("Tem certeza que deseja excluir este registro? A ação não pode ser desfeita.")) {
+            registros = registros.filter(reg => reg.id !== id);
+            salvarNoLocalStorage();
+            atualizarHistorico();
+        }
+    };
+
+    // --- FUNÇÃO DE ENVIO PARA WHATSAPP ---
+
+    /**
+     * Gera o conteúdo CSV e abre o WhatsApp com a mensagem pronta.
+     */
+    const enviarPorWhatsApp = () => {
+        if (registros.length === 0) {
+            alert("Nenhum registro para enviar!");
+            return;
+        }
+
+        const headers = ['Nome', 'Data', 'Entrada', 'Saida'];
+        const csvRows = [
+            headers.join(','),
+            ...registros.map(reg => 
+                [reg.nome, reg.data, reg.entrada, reg.saida]
+                .map(field => `"${field || ''}"`).join(',')
+            )
+        ];
+        const csvContent = csvRows.join('\n');
+
+        const nomeColaborador = registros[0]?.nome || 'Colaborador';
+        const mesReferencia = registros.length > 0 ? new Date(registros[0].data).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : 'mês atual';
+
+        // Monta a mensagem para o WhatsApp, usando a formatação de monospaçado (```)
+        const mensagem = `*Folha de Ponto Digital*\n\n` +
+                       `Olá! Segue a folha de ponto de *${nomeColaborador}* ` +
+                       `referente a *${mesReferencia}*.\n\n` +
+                       `\`\`\`\n${csvContent}\n\`\`\``;
+
+        const mensagemCodificada = encodeURIComponent(mensagem);
+
+        // Este link abre o WhatsApp e permite que o usuário escolha o contato
+        const whatsappURL = `whatsapp://send?text=${mensagemCodificada}`;
+
+        // Abre o link em uma nova aba (que redirecionará para o app no celular)
+        window.open(whatsappURL, '_blank');
+    };
+
+    // --- FUNÇÕES AUXILIARES ---
+
+    const salvarNoLocalStorage = () => {
+        localStorage.setItem('registrosPontos', JSON.stringify(registros));
+    };
+
+    const formatarData = (dataStr) => {
+        const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        const dataObj = new Date(`${dataStr}T00:00:00`);
+        const diaSemana = diasSemana[dataObj.getUTCDay()];
+        const dia = String(dataObj.getUTCDate()).padStart(2, '0');
+        const mes = String(dataObj.getUTCMonth() + 1).padStart(2, '0');
+        return `${dia}/${mes} - ${diaSemana}`;
+    };
+
+    // --- EVENT LISTENERS ---
+    form.addEventListener('submit', salvarRegistro);
+    tabelaHistorico.addEventListener('click', handleAcoesTabela);
+    whatsappBtn.addEventListener('click', enviarPorWhatsApp);
+
+    // Sidebar (Mobile)
+    toggleMenu.addEventListener('click', () => historySidebar.classList.add('visible'));
+    closeSidebar.addEventListener('click', () => historySidebar.classList.remove('visible'));
+
+    // --- INICIALIZAÇÃO ---
+    atualizarHistorico();
+});
